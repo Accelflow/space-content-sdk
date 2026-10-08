@@ -1,0 +1,6 @@
+{
+ "name":"space-content-vite-example","private":true,"type":"module",
+ "engines":{"node":">=24"},
+ "scripts":{"build":"node ../shared/sync.mjs && node generate.mjs && vite build"},
+ "devDependencies":{"vite":"8.3.4"}
+}

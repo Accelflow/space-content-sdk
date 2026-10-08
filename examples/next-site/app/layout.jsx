@@ -1,0 +1,2 @@
+import Script from 'next/script';
+export default function Layout({children}){return <html lang="ja"><body style={{maxWidth:760,margin:'48px auto',padding:'0 24px',font:'18px/1.75 system-ui'}}><header><button type="button" data-space-language="ja">日本語</button> <button type="button" data-space-language="en">English</button></header>{children}<Script src="/space-language.js" strategy="afterInteractive"/></body></html>;}

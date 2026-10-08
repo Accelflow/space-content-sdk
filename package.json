@@ -1,0 +1,23 @@
+{
+  "name": "@accelflow/space-content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    "./node": {
+      "types": "./node.d.mts",
+      "import": "./node.mjs"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "files": [
+    "node.mjs",
+    "node.d.mts",
+    "README.md"
+  ]
+}

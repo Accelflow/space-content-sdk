@@ -1,0 +1,8 @@
+**/node_modules/
+**/.space-cache/
+**/.space-build/
+**/.generated/
+**/public/
+**/dist/
+**/.next/
+**/out/
