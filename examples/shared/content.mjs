@@ -5,7 +5,12 @@ export function segments(slug) {
  if(parts.some(s=>!s||s==='.'||s==='..'||!/^[-_\p{L}\p{N}]+$/u.test(s)))throw Error('Example requires plain slug segments: '+slug);
  return parts;
 }
-export const articlePath = article => '/articles/'+segments(article.slug).map(encodeURIComponent).join('/')+'/';
+export const articleRoute = article => {
+ const path=article.metadata?.path;
+ if(path!==undefined&&(typeof path!=='string'||!path.startsWith('/')||path.startsWith('//')))throw Error('Invalid article path');
+ return segments(path===undefined?article.slug:path.slice(1)).join('/');
+};
+export const articlePath = article => '/articles/'+segments(articleRoute(article)).map(encodeURIComponent).join('/')+'/';
 export async function readContent() {
  const value=JSON.parse(await readFile('.generated/space-content.json','utf8'));
  if(value.format!=='html')throw Error('This sample renders HTML; choose HTML in Workspace settings or implement a JSON renderer.');

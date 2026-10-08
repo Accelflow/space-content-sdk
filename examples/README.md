@@ -75,3 +75,11 @@ would retain removed pages on the host.
   it is never linked from the index and contains no withdrawn article content.
 - These are integration examples, not a hosted customer site or a published SDK.
   Cloud acceptance and production activation are separate release gates.
+
+## Page tree routes
+
+Examples use `metadata.path` for the full parent/child route; `slug` is the leaf.
+For `slug: "setup"` and `metadata.path: "/guide/setup"`, both examples generate
+`/articles/guide/setup/`. Only legacy inputs without a path fall back to slug.
+Invalid paths fail the build. Content selection follows the workspace's Viewer
+content updates setting (latest saved content or an explicit publication).

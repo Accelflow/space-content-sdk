@@ -17,7 +17,7 @@ test('Vite generator writes Unicode paths and removes withdrawn output',async()=
  try {
   await mkdir(join(cwd,'.generated'));
   const input=join(cwd,'.generated/space-content.json');
-  await writeFile(input,JSON.stringify({format:'html',articles:[{slug:'入門/概要',title:'<Title>',metadata:{description:'"Description"'},body:'<p>Body</p>'}]}));
+  await writeFile(input,JSON.stringify({format:'html',articles:[{slug:'概要',title:'<Title>',metadata:{path:'/入門/概要',description:'"Description"'},body:'<p>Body</p>'}]}));
   generate();
   const html=await readFile(join(cwd,'.generated/site/articles/入門/概要/index.html'),'utf8');
   assert(html.includes('<title>&lt;Title&gt;</title>'));
