@@ -1,12 +1,19 @@
 # Space build content SDK (unpublished)
 
-Node 24 build-time client for the Headless batch stream. This standalone repository contains the SDK source and examples. The npm
-package is not published; package versioning, license selection and release
-automation are deferred. Do not import this SDK into browser bundles.
+Node 24+ build-time content synchronization for Space Headless CMS, with optional browser-safe table-of-contents presentation. Licensed under MIT.
 
-Run `examples/sync.mjs` from your site's root before `vite build` or `next build`.
-Copy the example and change its SDK import to `@accelflow/space-content/node` after
-installing a published package (or link this local package during development).
+The initial npm release is being prepared; the commands below apply once it is published.
+
+```sh
+npm install @accelflow/space-content@beta
+```
+
+```js
+import { syncContent } from '@accelflow/space-content/node';
+```
+
+Run content synchronization before your site's build. The `/node` entry is server-only; never include it or a Workspace token in a browser bundle.
+
 Use `SPACE_API_URL`, `SPACE_DOWNLOAD_ORIGIN`, `SPACE_ACCOUNT_ID`,
 `SPACE_WORKSPACE_ID`, `SPACE_BUILD_TOKEN` as server-only environment variables.
 IDs are stable account/workspace IDs, not slugs. `.space-cache`, `.space-build`,
@@ -55,3 +62,23 @@ repository; the tests here exercise the client with synthetic protocol fixtures.
 
 See [Vite and Next.js examples](examples/README.md) for complete static builds,
 CI cache handling, HTML rendering, asset headers and deployment boundaries.
+
+## Table of contents
+
+The browser-safe entry is separate from the authenticated Node client:
+
+```js
+import { mountTableOfContents } from '@accelflow/space-content/toc';
+import '@accelflow/space-content/toc.css';
+
+const cleanup = mountTableOfContents(articleElement, { locale: 'ja' });
+// Call cleanup when replacing the article or unmounting the component.
+```
+
+The default presentation is expanded on desktop and collapsed on mobile. Clicking a mobile link closes it. Titles are localized and omitted from their own entries. Use `title`, `maxLevel`, `desktopOpen`, `mobileOpen`, `mobileQuery`, or `render` to customize it. Styles are optional; see `toc.d.mts` for the complete interface.
+
+In Next.js, use this browser entry in a client component effect and return the cleanup function. Keep `syncContent` in build/server code. Both Vite and Next.js use the same package.
+
+## Release preparation
+
+See [RELEASING.md](RELEASING.md) for packaging checks, initial publication and OIDC setup.

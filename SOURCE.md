@@ -11,6 +11,9 @@ tests. Do not independently develop both copies; update the service consumer
 through an explicit, reviewed source import until a versioned package is available.
 
 No service infrastructure, deployment credentials, real content, generated build
-output or source-repository Git history is included. `private: true` and version
-`0.0.0` are deliberately retained. License selection and npm publication metadata
-are deferred; no open-source license grant is declared by this extraction.
+output or source-repository Git history is included. The initial npm package is prepared as `0.1.0-beta.1` under MIT; it has not yet been published.
+
+TOC presentation, declarations, CSS and tests were imported from Space commit
+`b7a8b3f2608f0806b82374fc2e284eb8a5a01247`. Node runtime and declarations remain
+byte-identical to that revision. This explicit import reconciles changes made
+in Space during the extraction transition. Future SDK changes belong here.

@@ -1,0 +1,22 @@
+/* Optional marketing-derived responsive theme. Override variables or omit this file. */
+.space-toc { margin: 36px 0 42px; border: 1px solid var(--space-toc-border, #d9e5d8); border-radius: 0; padding: 24px 28px; background: var(--space-toc-background, #f5f9f0); }
+[data-space-toc] > summary { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; color: var(--space-toc-color, #26352b); cursor: pointer; font-family: Manrope, sans-serif; font-size: 18px; font-weight: 700; list-style: none; }
+[data-space-toc] > summary::-webkit-details-marker { display: none; }
+[data-space-toc] > summary::after { content: "−"; margin-left: 20px; font-size: 22px; font-weight: 500; line-height: 1; }
+.space-toc:not([open]) { padding-block: 5px; }
+.space-toc:not([open]) > summary { margin-bottom: 0; }
+.space-toc:not([open]) > summary::after { content: "+"; }
+.space-toc ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; counter-reset: blog-toc-h2; }
+.space-toc li { margin: 0; line-height: 1.45; }
+.space-toc li[data-level="2"] { display: grid; grid-template-columns: 1.5em minmax(0, 1fr); column-gap: .45em; align-items: baseline; counter-increment: blog-toc-h2; }
+.space-toc li[data-level="2"]::before { content: counter(blog-toc-h2) ". "; color: #74836f; font-weight: 700; text-align: right; }
+.space-toc li[data-level="3"] { padding-left: 1.25em; font-size: .94em; }
+.space-toc a { color: var(--space-toc-link, #405f31); text-decoration: none; }
+.space-toc a:hover { color: #65a511; text-decoration: underline; }
+@media (max-width: 620px) {
+  .space-toc { position: sticky; top: calc(var(--space-toc-header-height, 64px) + 12px); z-index: 10; padding: 20px; }
+  .space-toc.is-stuck:not([open]) { width: 44px; height: 44px; margin-left: auto; padding: 0; background: #fff; border-radius: 50%; box-shadow: 0 4px 16px rgba(0, 0, 0, .14); }
+  .space-toc.is-stuck:not([open]) > summary { width: 42px; height: 42px; justify-content: center; margin: 0; font-size: 0; }
+  .space-toc.is-stuck:not([open]) > summary::before { content: ""; display: block; flex: 0 0 20px; width: 20px; height: 20px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 5h2v2H3zM7 5h14v2H7zM3 11h2v2H3zM7 11h14v2H7zM3 17h2v2H3zM7 17h14v2H7z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 5h2v2H3zM7 5h14v2H7zM3 11h2v2H3zM7 11h14v2H7zM3 17h2v2H3zM7 17h14v2H7z'/%3E%3C/svg%3E") center / contain no-repeat; }
+  .space-toc.is-stuck:not([open]) > summary::after { content: none; margin: 0; }
+}
