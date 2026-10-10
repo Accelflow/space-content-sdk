@@ -10,3 +10,5 @@ out/
 dist/
 *.tgz
 .DS_Store
+
+.local/

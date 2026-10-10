@@ -1,0 +1,31 @@
+name: Publish npm package
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Reviewed Git tag matching package version (v0.1.0-beta.1)
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check release tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: node -e 'const p=require("./package.json"); if(process.env.RELEASE_TAG!=="v"+p.version || p.private) process.exit(1)'
+      - run: npm test
+      - run: npm run verify:package
+      - run: npm publish --access public
