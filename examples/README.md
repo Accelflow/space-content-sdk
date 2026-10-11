@@ -2,13 +2,15 @@
 
 These two examples fetch published Space content during a Node build, then export
 static pages. The browser never receives the Build token or calls the Build API.
-They use the repository SDK directly; `@accelflow/space-content` is not published
-on npm yet. Node 24 or later is required. Each example is a standalone npm project
-with a committed lockfile, independent of the root package.
+They use the repository SDK directly. The public npm SDK is available as
+`@accelflow/space-content`. Node 24 or later is required. Install root development
+dependencies first (`npm ci --ignore-scripts --include=dev` from the repository root):
+the shared build-time HTML sanitizer is resolved there. Each framework also has
+its own committed lockfile.
 
 ## Build
 
-Enable Headless with **HTML** in the workspace, then issue a read-only Build token.
+Enable Headless with **JSON** (recommended; HTML is also supported) in the workspace, then issue a read-only Build token.
 Configure these values in your CI secret/environment settings:
 
 | Variable | Meaning |
@@ -60,12 +62,17 @@ would retain removed pages on the host.
 
 ## Rendering boundaries
 
-- The core SDK supports HTML and JSON. These examples render HTML only and stop
-  with a clear error for a JSON workspace; add a document JSON renderer for that mode.
+- The core SDK supports HTML and JSON. These examples render either format through the SDK renderer.
 - Slugs accept letters, numbers, hyphens and underscores, including Unicode and
   nested path segments. Empty, dot, traversal and query segments are rejected.
   Duplicate routes are rejected before rendering.
-- Body HTML comes from the Space publication renderer. Article-to-article links
+- Body HTML comes from the Space publication renderer and is sanitized at the
+  shared `readContent()` boundary before either framework renders it. Scripts,
+  event handlers, inline styles, SVG, forms and arbitrary iframe embeds are removed.
+  PDF links are standard; use `pdfMode: 'embed'` to allow only manifest-listed PDFs. HTTPS images, relative asset URLs, heading IDs and TOC
+  markers are retained. Use the `renderers`, `resolveArticle` and `resolveSubArticles` options for custom presentation;
+  custom HTML still passes through sanitization. Attachment layout styles and
+  smart-link styling must be supplied by the frontend. Article-to-article links
   are preserved as authored; configure them for the target site's route scheme.
 - Asset paths use content hashes. Generated `_headers` supplies MIME types and
   `nosniff` for Cloudflare Pages. Other static hosts need equivalent header rules,
@@ -73,7 +80,7 @@ would retain removed pages on the host.
 - Next 16 static export needs a parameter even when no articles are published.
   The empty publication emits a `__space_empty__` route through `notFound()`;
   it is never linked from the index and contains no withdrawn article content.
-- These are integration examples, not a hosted customer site or a published SDK.
+- These are integration examples, not a hosted customer site.
   Cloud acceptance and production activation are separate release gates.
 
 ## Page tree routes
@@ -83,3 +90,14 @@ For `slug: "setup"` and `metadata.path: "/guide/setup"`, both examples generate
 `/articles/guide/setup/`. Only legacy inputs without a path fall back to slug.
 Invalid paths fail the build. Content selection follows the workspace's Viewer
 content updates setting (latest saved content or an explicit publication).
+
+## Attachment delivery
+
+Referenced clean attachments are downloaded as bytes and addressed by SHA-256.
+The sync script replaces `public/space-assets`; the final static build copies these
+files to the deployed site. External image URLs are not downloaded by this flow.
+Serve extensionless assets using their manifest MIME type and `nosniff`; `_headers`
+is Cloudflare Pages-specific and other hosts must configure equivalent rules.
+HTML sanitization does not scan, sanitize or re-encode attachment bytes. SVG/HTML
+files need separate-origin or attachment-only delivery policies. Removing iframe
+markup does not remove the corresponding asset file.

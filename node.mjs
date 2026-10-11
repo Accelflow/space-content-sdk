@@ -1,5 +1,6 @@
+import {createReadStream} from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile, rename, rm, lstat } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rename, rm, lstat, open, copyFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const hashPattern = /^[a-f0-9]{64}$/;
@@ -12,7 +13,7 @@ function validateManifest(m, accountId, workspaceId) {
     const objects = new Map();
     let total = 0;
     for (const o of m.objects) {
-        if (!hashPattern.test(o.hash) || !Number.isSafeInteger(o.size) || o.size < 0 || o.size > 64 * 1024 * 1024 || objects.has(o.hash))
+        if (!hashPattern.test(o.hash) || !Number.isSafeInteger(o.size) || o.size < 0 || o.size > 250_000_000 || objects.has(o.hash))
             throw Error('invalid_manifest');
         objects.set(o.hash, o);
         total += o.size;
@@ -23,7 +24,7 @@ function validateManifest(m, accountId, workspaceId) {
         if (typeof a.id !== 'string' || typeof a.slug !== 'string' || typeof a.title !== 'string' || !objects.has(a.bodyHash) || !objects.has(a.metadataHash))
             throw Error('invalid_manifest');
     for (const a of m.assets)
-        if (typeof a.id !== 'string' || typeof a.contentType !== 'string' || typeof a.filename !== 'string' || !objects.has(a.hash))
+        if (typeof a.id !== 'string' || typeof a.contentType !== 'string' || typeof a.filename !== 'string' || /[\r\n\x00]/.test(a.filename) || !/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/i.test(a.contentType) || !objects.has(a.hash))
             throw Error('invalid_manifest');
     return objects;
 }
@@ -67,24 +68,14 @@ class Reader {
         chunks.push(b[0]);
     } throw Error('frame_too_large'); }
 }
-async function cacheRead(path, o) { try {
-    if (!(await lstat(path)).isFile() || (await lstat(path)).isSymbolicLink())
-        return null;
-    const b = await readFile(path);
-    return b.length === o.size && sha(b) === o.hash ? b : null;
+async function cacheValid(path,o) {
+ try {
+  const stat=await lstat(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.size!==o.size)return false;
+  const digest=createHash('sha256');for await(const chunk of createReadStream(path))digest.update(chunk);
+  return digest.digest('hex')===o.hash;
+ }catch(e){if(e.code==='ENOENT')return false;throw e;}
 }
-catch (e) {
-    if (e.code === 'ENOENT')
-        return null;
-    throw e;
-} }
-async function save(path, data) { const temp = path + '.' + randomUUID() + '.partial'; try {
-    await writeFile(temp, data, { flag: 'wx', mode: 0o600 });
-    await rename(temp, path);
-}
-finally {
-    await rm(temp, { force: true });
-} }
+async function cacheRead(path,o) {return await cacheValid(path,o)?readFile(path):null;}
 async function safeDirectory(path) { await mkdir(path, { recursive: true, mode: 0o700 }); const s = await lstat(path); if (s.isSymbolicLink() || !s.isDirectory())
     throw Error('unsafe_cache_directory'); }
 /** Build-time only. cacheDir must be a private, trusted directory; never expose it to untrusted PRs. */
@@ -112,7 +103,7 @@ export async function syncContent({ apiUrl, downloadOrigin, accountId, workspace
     await safeDirectory(namespace);
     const missing = [];
     for (const o of objects.values())
-        if (!await cacheRead(join(namespace, o.hash), o))
+        if (!await cacheValid(join(namespace, o.hash), o))
             missing.push(o.hash);
     let pending = missing, downloads = 0;
     for (let attempt = 0; pending.length; attempt++) {
@@ -145,18 +136,18 @@ export async function syncContent({ apiUrl, downloadOrigin, accountId, workspace
                 const item = await reader.line(), expected = objects.get(item.hash);
                 if (!remaining.has(item.hash) || !expected || item.size !== expected.size)
                     throw Error('unexpected_object');
-                const data = Buffer.alloc(item.size);
-                let offset = 0;
-                while (offset < data.length) {
-                    const chunk = await reader.take(data.length - offset);
-                    if (!chunk)
-                        throw Error('truncated_stream');
-                    data.set(chunk, offset);
-                    offset += chunk.length;
-                }
-                if (sha(data) !== item.hash)
-                    throw Error('object_checksum_mismatch');
-                await save(join(namespace, item.hash), data);
+                const path=join(namespace,item.hash), temp=path+'.'+randomUUID()+'.partial';
+                const file=await open(temp,'wx',0o600), digest=createHash('sha256');
+                try {
+                    let received=0;
+                    while(received<item.size) {
+                        const chunk=await reader.take(item.size-received);
+                        if(!chunk)throw Error('truncated_stream');
+                        received+=chunk.length;digest.update(chunk);await file.writeFile(chunk);
+                    }
+                    if(digest.digest('hex')!==item.hash)throw Error('object_checksum_mismatch');
+                    await file.close();await rename(temp,path);
+                } finally {await file.close().catch(()=>{});await rm(temp,{force:true});}
                 remaining.delete(item.hash);
                 downloads++;
             }
@@ -174,7 +165,7 @@ export async function syncContent({ apiUrl, downloadOrigin, accountId, workspace
         }
         pending = [];
         for (const o of missing.map(h => objects.get(h)))
-            if (!await cacheRead(join(namespace, o.hash), o))
+            if (!await cacheValid(join(namespace, o.hash), o))
                 pending.push(o.hash);
         // A missing terminal marker is never accepted even when every object arrived.
         if (!complete && !pending.length)
@@ -194,10 +185,10 @@ export async function syncContent({ apiUrl, downloadOrigin, accountId, workspace
         }
         await safeDirectory(join(generation, 'space-assets'));
         for (const a of manifest.assets) {
-            const data = await cacheRead(join(namespace, a.hash), objects.get(a.hash));
-            if (!data)
+            const valid = await cacheValid(join(namespace, a.hash), objects.get(a.hash));
+            if (!valid)
                 throw Error('cache_corrupt');
-            await writeFile(join(generation, 'space-assets', a.hash), data);
+            await copyFile(join(namespace,a.hash),join(generation,'space-assets',a.hash));
         }
         await writeFile(join(generation, 'content.json'), JSON.stringify({ snapshotId: manifest.snapshotId, format: manifest.format, articles, assets: manifest.assets }));
         return { snapshotDir: generation, manifest, diagnostics: { downloadedObjects: downloads, cacheHits: objects.size - missing.length } };

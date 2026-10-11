@@ -63,3 +63,17 @@ for (const mode of ['hash', 'end', 'origin'])
             await rm(dir, { recursive: true, force: true });
         }
     });
+test('streams a 250 MB plan-limit attachment and reuses its verified cache',async()=>{
+ const size=250_000_000,chunk=Buffer.alloc(1024*1024,7),digest=createHash('sha256');
+ for(let n=0;n<size;n+=chunk.length)digest.update(chunk.subarray(0,Math.min(chunk.length,size-n)));
+ const hash=digest.digest('hex'),fixed={version:1,accountId:'a',workspaceId:'w',format:'json',articles:[],assets:[{id:'large',hash,filename:'large.pdf',contentType:'application/pdf'}],objects:[{hash,size}]};
+ const manifest={...fixed,snapshotId:sha(JSON.stringify(fixed))},dir=await mkdtemp(join(tmpdir(),'headless-large-'));let transfers=0;
+ const options={apiUrl:'https://api.test',downloadOrigin:'https://download.test',accountId:'a',workspaceId:'w',token:'secret',cacheDir:join(dir,'cache'),outputDir:join(dir,'out'),fetch:async(url)=>{
+  if(new URL(url).hostname==='api.test')return Response.json({session:'ticket',expiresAt:Date.now()+60000,downloadUrl:'https://download.test/download',manifest});
+  transfers++;async function* parts(){yield frame({version:1,snapshotId:manifest.snapshotId,count:1});yield frame({hash,size});for(let n=0;n<size;n+=chunk.length)yield chunk.subarray(0,Math.min(chunk.length,size-n));yield frame({end:true,snapshotId:manifest.snapshotId,count:1});}
+  return new Response(ReadableStream.from(parts()));
+ }};
+ try {assert.equal((await syncContent(options)).diagnostics.downloadedObjects,1);assert.equal((await syncContent(options)).diagnostics.cacheHits,1);assert.equal(transfers,1);
+  const invalid={...fixed,objects:[{hash,size:size+1}]};manifest.objects=invalid.objects;manifest.snapshotId=sha(JSON.stringify(invalid));await assert.rejects(syncContent(options),/invalid_manifest/);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
