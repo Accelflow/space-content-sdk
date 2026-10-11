@@ -12,5 +12,5 @@ await cp(new URL('./language.js',import.meta.url),'public/space-language.js');
 await rm(result.snapshotDir,{recursive:true,force:true});
 await writeFile('.generated/sync-result.json',JSON.stringify(result.diagnostics));
 // Cloudflare Pages-style MIME declarations. Other hosts should implement equivalent headers.
-await writeFile('public/_headers',result.manifest.assets.map(a=>`/space-assets/${a.hash}\n  Content-Type: ${a.contentType}\n  X-Content-Type-Options: nosniff`).join('\n'));
+await writeFile('public/_headers',result.manifest.assets.map(a=>`/space-assets/${a.hash}\n  Content-Type: ${a.contentType}\n  X-Content-Type-Options: nosniff${/^(image\/(png|jpeg|gif|webp|avif)|application\/pdf)$/.test(a.contentType)?'':'\n  Content-Disposition: attachment'}`).join('\n'));
 console.log('Space sync: '+JSON.stringify(result.diagnostics));

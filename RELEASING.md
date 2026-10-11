@@ -1,15 +1,15 @@
 # npm release
 
-The initial release candidate is `@accelflow/space-content@0.1.0-beta.1`, MIT,
-Node 24+. It is not yet published. `publishConfig.tag` is intentionally `beta`.
+The current update is `@accelflow/space-content@0.1.0-beta.2`, MIT, Node 24+.
+Beta.1 was published and registry-verified. `publishConfig.tag` is intentionally `beta`.
 
 1. Run `npm test` and `npm run verify:package`. The latter installs the actual
    tarball into an isolated consumer, runs protocol/TOC tests against package
-   exports and builds both framework examples with synthetic HTML content.
+   exports and builds both framework examples with synthetic JSON content and HTML sanitizer fixtures.
    This is packaging acceptance, not a new live API acceptance run.
-2. Review the eight-file npm allowlist, license, README and source commit.
+2. Review the allowlisted npm allowlist, license, README and source commit.
 3. Authenticate an npm maintainer interactively and verify ownership of the
-   `@accelflow` scope. This checkout currently has no npm login. A registry 404
+   `@accelflow` scope. Recheck `npm whoami`; CLI sessions can expire. A registry 404
    does not establish ownership or permission to publish the proposed name.
 4. For initial package registration, publish the reviewed beta from the exact
    release commit with `npm publish --access public --tag beta`. Complete any
