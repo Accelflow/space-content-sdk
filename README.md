@@ -1,6 +1,13 @@
-# Space build content SDK
+# Accelflow Space Headless CMS SDK
 
-Node 24+ build-time content synchronization for Space Headless CMS, with optional browser-safe table-of-contents presentation. Licensed under MIT.
+The official Headless CMS SDK for [Accelflow Space](https://space.accelflow.jp/en/), developed and maintained by [Accelflow Inc.](https://accelflow.jp/).
+
+Create, review, and publish content with your team in Space, then bring it into your own website with Vite, Next.js, or another build system. The SDK synchronizes published content at build time and provides optional rendering, table-of-contents, and author-profile utilities. Requires Node.js 24 or later. Licensed under MIT.
+
+- [Service website](https://space.accelflow.jp/en/)
+- [Headless CMS use case](https://space.accelflow.jp/en/use-cases/headless-cms/)
+- [Company website — Accelflow Inc.](https://accelflow.jp/)
+- [Source code](https://github.com/Accelflow/space-content-sdk) · [Report an issue](https://github.com/Accelflow/space-content-sdk/issues)
 
 The beta package is available on npm.
 
@@ -64,7 +71,7 @@ repository; the tests here exercise the client with synthetic protocol fixtures.
 
 ## Full framework examples
 
-See [Vite and Next.js examples](examples/README.md) for complete static builds,
+See [Vite and Next.js examples](https://github.com/Accelflow/space-content-sdk/tree/main/examples#readme) for complete static builds,
 CI cache handling, HTML rendering, asset headers and deployment boundaries.
 
 ## Table of contents
@@ -75,7 +82,7 @@ The browser-safe entry is separate from the authenticated Node client:
 import { mountTableOfContents } from '@accelflow/space-content/toc';
 import '@accelflow/space-content/toc.css';
 
-const cleanup = mountTableOfContents(articleElement, { locale: 'ja' });
+const cleanup = mountTableOfContents(articleElement, { locale: 'en' });
 // Call cleanup when replacing the article or unmounting the component.
 ```
 
@@ -85,14 +92,14 @@ In Next.js, use this browser entry in a client component effect and return the c
 
 ## Release preparation
 
-See [RELEASING.md](RELEASING.md) for packaging checks, initial publication and OIDC setup.
+See [RELEASING.md](https://github.com/Accelflow/space-content-sdk/blob/main/RELEASING.md) for packaging checks, initial publication and OIDC setup.
 
 ## JSON and HTML rendering
 
 ```js
 import {renderArticleBody} from '@accelflow/space-content/render';
 const html = renderArticleBody(article.body, {
-  assets: content.assets, locale: 'ja', pdfMode: 'link',
+  assets: content.assets, locale: 'en', pdfMode: 'link',
   renderers: {paragraph: ({children}) => `<p>${children}</p>`},
 });
 ```
@@ -132,12 +139,12 @@ import '@accelflow/space-content/profile.css';
 
 const profile = createAuthorProfile(content.articles, {
   origin: 'https://your-site.example',
-  locale: 'ja',
-  url: '/ja/blog/authors/editorial-team/',
-  articleHref: article => `/ja/blog/${article.slug}/`,
+  locale: 'en',
+  url: '/en/blog/authors/editorial-team/',
+  articleHref: article => `/en/blog/${article.slug}/`,
 });
 const html = renderAuthorProfile(profile, {
-  labels: {about: '編集部について', articles: '編集部の記事'},
+  labels: {about: 'About the editorial team', articles: 'Articles by the editorial team'},
 });
 ```
 
@@ -161,7 +168,7 @@ Draft articles, other locales and articles with a different author are excluded.
 
 When a Space workspace has a CMS URL, the delivery API rewrites article links
 before returning HTML or JSON. Use the article base URL (for example,
-`https://example.com/ja/blog/`). Workspace references use that base plus the
+`https://example.com/en/blog/`). Workspace references use that base plus the
 published page-tree path. Links with the same hostname become root-relative;
 other HTTP(S) links retain an absolute URL and carry `target="_blank"` with
 `rel="noopener noreferrer"`. The renderer preserves these safe external targets.
