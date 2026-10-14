@@ -1,6 +1,6 @@
 {
   "name": "@accelflow/space-content",
-  "version": "0.1.0-beta.2",
+  "version": "0.1.0-beta.3",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -18,7 +18,13 @@
     "./render": {
       "types": "./render.d.mts",
       "import": "./render.mjs"
-    }
+    },
+    "./profile": {
+      "types": "./profile.d.mts",
+      "import": "./profile.mjs"
+    },
+    "./profile.css": "./profile.css",
+    "./content.css": "./content.css"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
@@ -34,7 +40,11 @@
     "toc.css",
     "LICENSE",
     "render.mjs",
-    "render.d.mts"
+    "render.d.mts",
+    "profile.mjs",
+    "profile.d.mts",
+    "profile.css",
+    "content.css"
   ],
   "description": "Build-time Headless CMS content sync and customizable table of contents for Accelflow Space",
   "license": "MIT",

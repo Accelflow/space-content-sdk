@@ -101,3 +101,13 @@ is Cloudflare Pages-specific and other hosts must configure equivalent rules.
 HTML sanitization does not scan, sanitize or re-encode attachment bytes. SVG/HTML
 files need separate-origin or attachment-only delivery policies. Removing iframe
 markup does not remove the corresponding asset file.
+
+## Author profile page
+
+Both examples generate `/ja/blog/authors/editorial-team/` and/or
+`/en/blog/authors/editorial-team/` when published author metadata exists in that
+locale. Configure `SITE_ORIGIN` with the deployed site origin for canonical URLs
+and JSON-LD (the example default is `https://example.com`). The article list uses
+the example's `/articles/` routes, including page-tree paths. Edit
+`shared/profiles.mjs` to choose another profile path or your own article routing.
+The standard CSS is copied to `public/space-profile.css`. Never copy API tokens.
