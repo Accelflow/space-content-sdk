@@ -1,0 +1,11 @@
+/* Opt-in article body layout. Keep paragraphs and intentional empty lines intact. */
+.space-content :where(td, th, li) > p {
+  margin-block: 0;
+}
+.space-content :where(td, th, li) > p + p {
+  margin-block-start: var(--space-content-paragraph-gap, 0.5em);
+}
+.space-content :where(td, th, li) > p:empty {
+  min-block-size: 1em;
+  min-block-size: 1lh;
+}

@@ -1,6 +1,7 @@
 import sanitizeHtml from 'sanitize-html';
 import {renderTableOfContents} from './toc.mjs';
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const linkTarget = attrs => attrs?.target === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
 const hash = /^[a-f0-9]{64}$/;
 const raster = new Set(['image/png','image/jpeg','image/gif','image/webp','image/avif']);
 function assetsIndex(assets = []) {
@@ -24,7 +25,7 @@ export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) 
   nonBooleanAttributes: sanitizeHtml.defaults.nonBooleanAttributes.filter(a=>a!=='sandbox'),
   allowedTags: [...sanitizeHtml.defaults.allowedTags,'img','details','summary','nav',...(pdfMode==='embed'?['iframe']:[])],
   allowedAttributes: {
-   '*':['id','class'], a:['href','title','data-level','download'],
+   '*':['id','class'], a:['href','title','data-level','download','target','rel'],
    img:['src','alt','title','width','height','loading','referrerpolicy'],
    nav:['data-table-of-contents','data-max-level','aria-label'], details:['open','data-space-toc'],
    li:['data-level','data-checked'], ol:['start'], td:['colspan','rowspan'], th:['colspan','rowspan','scope'],
@@ -33,6 +34,7 @@ export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) 
   allowedClasses:{'*':['*']},
   allowedSchemes:['https','http','mailto','tel'], allowedSchemesByTag:{img:['https'],iframe:[]}, allowProtocolRelative:false,
   transformTags: {
+   a: (tagName, attrs) => {const {target,rel,...rest}=attrs;return {tagName,attribs:{...rest,...(target==='_blank'&&/^https?:\/\//i.test(safeUrl(attrs.href))?{target:'_blank',rel:'noopener noreferrer'}:{})}};},
    iframe: (tagName, attrs) => ({tagName,attribs:{src:attrs.src??'',title:attrs.title??'PDF',sandbox:'',loading:'lazy',referrerpolicy:'no-referrer'}}),
   },
   exclusiveFilter: frame => frame.tag==='iframe' && !(pdfMode==='embed' && paths.get(frame.attribs.src)?.contentType==='application/pdf'),
@@ -42,16 +44,18 @@ export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) 
 export function renderArticleBody(body, options = {}) {
  if (typeof body==='string') return sanitizeArticleHtml(body,options);
  if (!body || body.type!=='doc' || !Array.isArray(body.content)) throw Error('invalid_document');
- const {ids}=assetsIndex(options.assets), headings=[], anchors=new Map(), used=new Set();let count=0;
+ const {ids}=assetsIndex(options.assets), headings=[], anchors=new Map(), used=new Set(), reserved=new Set();let count=0;
+ const validId=id=>typeof id==='string' && /^[\p{L}\p{N}_-]+$/u.test(id);
  const text=n=>n.type==='text'?String(n.text??''):(n.content??[]).map(text).join('');
  function inspect(n,depth=0) {
   if (!n || typeof n!=='object' || typeof n.type!=='string' || ++count>100000 || depth>64 || (n.content!==undefined&&!Array.isArray(n.content))) throw Error('invalid_document');
+  if(n.type==='heading' && validId(n.attrs?.id))reserved.add(n.attrs.id);
   for(const child of n.content??[])inspect(child,depth+1);
  }
  inspect(body);
  function collect(n) {
   if(n.type==='tableOfContents')return;
-  if(n.type==='heading') {const level=Number.isInteger(n.attrs?.level)&&n.attrs.level>=1&&n.attrs.level<=6?n.attrs.level:2;const title=text(n);let id=typeof n.attrs?.id==='string'&&/^[\p{L}\p{N}_-]+$/u.test(n.attrs.id)?n.attrs.id:title.toLowerCase().replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-|-$/g,'')||'heading';const base=id;let index=2;while(used.has(id))id=base+'-'+index++;used.add(id);anchors.set(n,id);headings.push({id,level,text:title});}
+  if(n.type==='heading') {const level=Number.isInteger(n.attrs?.level)&&n.attrs.level>=1&&n.attrs.level<=6?n.attrs.level:2;const title=text(n);const explicit=validId(n.attrs?.id);let id=explicit?n.attrs.id:options.headingId?options.headingId(title):title.toLowerCase().replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-|-$/g,'')||'heading';if(!validId(id))throw Error('invalid_heading_id');const base=id;let index=2;while(used.has(id)||(!explicit&&reserved.has(id))||(id!==base&&reserved.has(id)))id=base+'-'+index++;used.add(id);anchors.set(n,id);headings.push({id,level,text:title});}
   for(const child of n.content??[])collect(child);
  }
  collect(body);
@@ -62,7 +66,7 @@ export function renderArticleBody(body, options = {}) {
   let html='';
   if(n.type==='text') {
    html=e(n.text);
-   for(const mark of Array.isArray(n.marks)?n.marks:[]) {const tag={bold:'strong',italic:'em',underline:'u',strike:'s',code:'code'}[mark?.type];if(tag)html=wrap(tag,html);else if(mark?.type==='link'){const href=safeUrl(mark.attrs?.href);if(href)html=wrap('a',html,` href="${e(href)}"`);}}
+   for(const mark of Array.isArray(n.marks)?n.marks:[]) {const tag={bold:'strong',italic:'em',underline:'u',strike:'s',code:'code'}[mark?.type];if(tag)html=wrap(tag,html);else if(mark?.type==='link'){const href=safeUrl(mark.attrs?.href);if(href)html=wrap('a',html,` href="${e(href)}"${linkTarget(mark.attrs)}`);}}
   } else if(n.type==='heading') html=wrap('h'+(Number.isInteger(a.level)&&a.level>=1&&a.level<=6?a.level:2),children,` id="${e(anchors.get(n))}"`);
   else if(n.type==='tableOfContents') html=renderTableOfContents(headings,{locale:options.locale??'ja',maxLevel:a.maxLevel===2?2:3});
   else if(n.type==='image') {const src=safeUrl(a.src,true);html=src?`<img src="${e(src)}" alt="${e(a.alt)}" loading="lazy" referrerpolicy="no-referrer">`:'';}
@@ -71,7 +75,7 @@ export function renderArticleBody(body, options = {}) {
    const src='/space-assets/'+asset.hash, label=e(asset.filename);
    html=raster.has(asset.contentType)?`<img src="${src}" alt="${label}" loading="lazy">`:`<a href="${src}" download="${label}">${label}</a>`;
    if(asset.contentType==='application/pdf'&&options.pdfMode==='embed')html=`<iframe class="space-pdf" src="${src}" title="${label}" sandbox="" loading="lazy" referrerpolicy="no-referrer"></iframe>`+html;
-  } else if(n.type==='externalLinkCard') {const href=safeUrl(a.href);html=href?wrap('a',e(a.title||href),` href="${e(href)}"`):e(a.title);}
+  } else if(n.type==='externalLinkCard') {const href=safeUrl(a.href);html=href?wrap('a',e(a.title||href),` href="${e(href)}"${linkTarget(a)}`):e(a.title);}
   else if(n.type==='articleReference') {const target=options.resolveArticle?.(a);const href=safeUrl(target?.href);const label=e(a.labelMode==='custom'?a.customLabel:target?.title??a.fallbackTitle??a.title??'');html=href?wrap('a',label,` href="${e(href)}"`):label;}
   else if(n.type==='smartLink') html=e(a.label??a.categoryLabel??'');
   else if(n.type==='subArticleList') html=wrap('nav',wrap('ol',(options.resolveSubArticles?.(a)??[]).map(x=>{const href=safeUrl(x.href);return href?wrap('li',wrap('a',e(x.title),` href="${e(href)}"`)):'';}).join('')));

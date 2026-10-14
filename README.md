@@ -116,3 +116,94 @@ Serve copied assets with their manifest MIME and `X-Content-Type-Options: nosnif
 Force Content-Disposition attachment for non-raster, non-PDF types (especially
 HTML/SVG); they must never execute at the site's origin. The examples emit those
 headers for Cloudflare-style hosts; configure equivalent rules on other hosts.
+
+## Author profile pages (Vite / Next.js)
+
+`@accelflow/space-content/profile` is a framework-independent, token-free entrypoint.
+It generates the author biography, site introduction, organization/publisher and
+published article list from the metadata received by `syncContent()`. It also
+provides `ProfilePage` JSON-LD. Requires Space's profile metadata publication support.
+Old snapshots without author metadata must supply `identity` explicitly; no company
+or author is silently invented. An explicit identity also supports a zero-article page.
+
+```js
+import {createAuthorProfile, renderAuthorProfile} from '@accelflow/space-content/profile';
+import '@accelflow/space-content/profile.css';
+
+const profile = createAuthorProfile(content.articles, {
+  origin: 'https://your-site.example',
+  locale: 'ja',
+  url: '/ja/blog/authors/editorial-team/',
+  articleHref: article => `/ja/blog/${article.slug}/`,
+});
+const html = renderAuthorProfile(profile, {
+  labels: {about: '編集部について', articles: '編集部の記事'},
+});
+```
+
+Run this on the build/server side after syncing. `html` is a page fragment: place it
+inside your layout, with a UTF-8 charset, viewport, page title, description and canonical
+URL. Vite must prerender it (see the example); Next.js can use it in a statically
+exported server page. Use `profile.author`, `siteIntroduction`, `publisher`, `articles`
+and `jsonLd` to build your own React components instead of using the standard HTML.
+Do not pass API tokens into the profile object or browser bundles.
+
+The optional CSS is responsive and has `--space-profile-width`, `--space-profile-color`,
+`--space-profile-font`, `--space-profile-border`, and `--space-profile-link` overrides.
+You may omit it entirely. Labels can be overridden with `about`, `company`, `articles`,
+`empty`; `includeStructuredData: false` lets your framework own JSON-LD insertion.
+Content is treated as text, not executable HTML. Only HTTP(S) links are accepted;
+unsafe custom article routes fail the build. JSON-LD escapes `<` against script breakout.
+Language overrides use `translations.ja/en`, falling back per field to common values.
+Draft articles, other locales and articles with a different author are excluded.
+
+### CMS URL and link targets
+
+When a Space workspace has a CMS URL, the delivery API rewrites article links
+before returning HTML or JSON. Use the article base URL (for example,
+`https://example.com/ja/blog/`). Workspace references use that base plus the
+published page-tree path. Links with the same hostname become root-relative;
+other HTTP(S) links retain an absolute URL and carry `target="_blank"` with
+`rel="noopener noreferrer"`. The renderer preserves these safe external targets.
+Fragments, email and telephone links retain their normal behavior. Consumers
+with custom renderers should honor these link attributes. An empty CMS URL
+retains existing API link behavior. Update the build after changing the URL.
+
+### Heading IDs and table-of-contents links
+
+TOC links percent-encode the heading ID once (for example, `#%E3%81%BE%E3%81%A8%E3%82%81`).
+Valid explicit heading IDs are preserved. To retain an existing site's generation
+rules for headings without IDs, pass `headingId` to `renderArticleBody`:
+
+```js
+renderArticleBody(body, {
+  headingId: text => text.replace(/<[^>]+>/g, '').trim().toLowerCase()
+    .replace(/[\s/]+/g, '-').replace(/[^\p{Letter}\p{Number}-]/gu, '')
+    .replace(/-{2,}/g, '-') || 'heading',
+});
+```
+
+Return an unencoded ID containing only Unicode letters, numbers, `_` or `-`.
+Explicit IDs take priority over generated IDs; collisions receive numeric suffixes.
+Without the option, the SDK's existing generation rules remain unchanged.
+
+### Paragraph spacing in tables and lists
+
+Import the optional body stylesheet after your site's typography CSS and add
+`space-content` to the element containing the rendered article:
+
+```js
+import '@accelflow/space-content/content.css';
+```
+```html
+<article class="space-content">…sanitized article HTML…</article>
+```
+
+Single paragraphs directly inside table cells or list items have no outside
+margin. Consecutive paragraphs keep a `0.5em` gap. Empty paragraphs retain a line
+of height; `<br>`, nested lists and paragraph nodes are not removed. Other
+paragraphs and content outside this wrapper are unchanged. Customize the gap:
+
+```css
+.space-content { --space-content-paragraph-gap: 0.75em; }
+```
