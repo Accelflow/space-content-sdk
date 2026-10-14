@@ -1,6 +1,6 @@
 {
   "name": "@accelflow/space-content",
-  "version": "0.1.0-beta.3",
+  "version": "0.1.0-beta.4",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -55,12 +55,16 @@
   "bugs": {
     "url": "https://github.com/Accelflow/space-content-sdk/issues"
   },
-  "homepage": "https://github.com/Accelflow/space-content-sdk#readme",
+  "homepage": "https://space.accelflow.jp/en/",
   "publishConfig": {
     "access": "public",
     "tag": "beta"
   },
   "dependencies": {
     "sanitize-html": "^2.18.0"
+  },
+  "author": {
+    "name": "Accelflow Inc.",
+    "url": "https://accelflow.jp/"
   }
 }
