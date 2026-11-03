@@ -214,3 +214,19 @@ paragraphs and content outside this wrapper are unchanged. Customize the gap:
 ```css
 .space-content { --space-content-paragraph-gap: 0.75em; }
 ```
+
+### Image dimensions
+
+`renderArticleBody` retains independently specified `width` and `height` for JSON
+image nodes and raster attachment nodes. Each dimension must be an integer from
+1 through 10000 pixels. Missing dimensions retain the browser's automatic sizing.
+Images keep `max-width:100%` so they fit narrower article containers.
+
+For HTML bodies, the sanitizer retains only bounded pixel width/height, image
+`width:100%`, `height:auto`, and `max-width:100%` on the image/figure elements used
+by Space exports. Other inline CSS and executable attributes remain disallowed.
+
+Run `npm run verify:local` for the standard local verification. This runs the
+SDK tests, including Build API transfer-to-render image regressions for JSON and
+HTML, then verifies the packed public exports and Vite/Next static builds, and
+audits dependencies. The same image regressions run against the packed SDK.

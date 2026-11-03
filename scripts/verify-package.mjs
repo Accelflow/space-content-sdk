@@ -13,11 +13,11 @@ try {
  writeFileSync(join(temp,'package.json'),JSON.stringify({name:'sdk-consumer-verification',private:true,type:'module'}));
  run('npm',['install','--ignore-scripts','--no-audit','--no-fund',join(temp,packed.filename)]);
  mkdirSync(join(temp,'test'));
- for(const name of ['transport.test.mjs','toc.test.mjs','render.test.mjs','profile.test.mjs']) {
+ for(const name of ['transport.test.mjs','toc.test.mjs','render.test.mjs','profile.test.mjs','image-dimensions-e2e.test.mjs','image-dimensions.test.mjs']) {
   const source=readFileSync(join(root,'test',name),'utf8').replaceAll('../node.mjs','@accelflow/space-content/node').replaceAll('../toc.mjs','@accelflow/space-content/toc').replaceAll('../render.mjs','@accelflow/space-content/render').replaceAll('../profile.mjs','@accelflow/space-content/profile');
   writeFileSync(join(temp,'test',name),source);
  }
- run(process.execPath,['--test','test/transport.test.mjs','test/toc.test.mjs','test/render.test.mjs']);
+ run(process.execPath,['--test','test/transport.test.mjs','test/toc.test.mjs','test/render.test.mjs','test/image-dimensions-e2e.test.mjs','test/image-dimensions.test.mjs']);
  cpSync(join(root,'examples'),join(temp,'examples'),{recursive:true,filter:p=>!/(?:^|\/)(?:node_modules|\.next|\.generated|dist|out)(?:\/|$)/.test(p)});
  const shared=join(temp,'examples/shared/content.mjs');writeFileSync(shared,readFileSync(shared,'utf8').replace('../../render.mjs','@accelflow/space-content/render'));
  const fixture={format:'json',articles:[{slug:'intro',title:'Package acceptance',metadata:{path:'/guide/intro',description:'Synthetic content',locale:'ja',author:{name:'Profile acceptance',url:'https://example.com/ja/blog/authors/editorial-team/',description:'Profile biography'},publisher:{name:'Publisher',url:'https://example.com'},siteIntroduction:{heading:'What we cover',body:'Profile topics'}},body:{type:'doc',content:[{type:'tableOfContents'},{type:'heading',attrs:{level:2},content:[{type:'text',text:'Start'}]},{type:'paragraph',content:[{type:'text',text:'SDK package fixture'}]},{type:'image',attrs:{src:'javascript:SPACE_XSS',onerror:'SPACE_XSS'}}]}}]};
