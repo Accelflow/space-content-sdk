@@ -4,6 +4,11 @@ export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => 
 const linkTarget = attrs => attrs?.target === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
 const hash = /^[a-f0-9]{64}$/;
 const raster = new Set(['image/png','image/jpeg','image/gif','image/webp','image/avif']);
+const imagePixels = /^(?:[1-9]\d{0,3}|10000)px$/;
+function imageStyle(attrs) {
+ const dimensions=['width','height'].filter(key=>Number.isSafeInteger(attrs[key])&&attrs[key]>0&&attrs[key]<=10000).map(key=>`${key}:${attrs[key]}px`);
+ return dimensions.length?` style="max-width:100%;${dimensions.join(';')}"`:'';
+}
 function assetsIndex(assets = []) {
  const ids = new Map(), paths = new Map();
  for (const a of assets) {
@@ -26,12 +31,16 @@ export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) 
   allowedTags: [...sanitizeHtml.defaults.allowedTags,'img','details','summary','nav',...(pdfMode==='embed'?['iframe']:[])],
   allowedAttributes: {
    '*':['id','class'], a:['href','title','data-level','download','target','rel'],
-   img:['src','alt','title','width','height','loading','referrerpolicy'],
+   img:['src','alt','title','width','height','loading','referrerpolicy','style'], figure:['style'],
    nav:['data-table-of-contents','data-max-level','aria-label'], details:['open','data-space-toc'],
    li:['data-level','data-checked'], ol:['start'], td:['colspan','rowspan'], th:['colspan','rowspan','scope'],
    iframe:['src','title','sandbox','loading','referrerpolicy'],
   },
   allowedClasses:{'*':['*']},
+  allowedStyles:{
+   img:{width:[imagePixels,/^100%$/],height:[imagePixels,/^auto$/],'max-width':[/^100%$/]},
+   figure:{width:[imagePixels],'max-width':[/^100%$/]},
+  },
   allowedSchemes:['https','http','mailto','tel'], allowedSchemesByTag:{img:['https'],iframe:[]}, allowProtocolRelative:false,
   transformTags: {
    a: (tagName, attrs) => {const {target,rel,...rest}=attrs;return {tagName,attribs:{...rest,...(target==='_blank'&&/^https?:\/\//i.test(safeUrl(attrs.href))?{target:'_blank',rel:'noopener noreferrer'}:{})}};},
@@ -69,11 +78,11 @@ export function renderArticleBody(body, options = {}) {
    for(const mark of Array.isArray(n.marks)?n.marks:[]) {const tag={bold:'strong',italic:'em',underline:'u',strike:'s',code:'code'}[mark?.type];if(tag)html=wrap(tag,html);else if(mark?.type==='link'){const href=safeUrl(mark.attrs?.href);if(href)html=wrap('a',html,` href="${e(href)}"${linkTarget(mark.attrs)}`);}}
   } else if(n.type==='heading') html=wrap('h'+(Number.isInteger(a.level)&&a.level>=1&&a.level<=6?a.level:2),children,` id="${e(anchors.get(n))}"`);
   else if(n.type==='tableOfContents') html=renderTableOfContents(headings,{locale:options.locale??'ja',maxLevel:a.maxLevel===2?2:3});
-  else if(n.type==='image') {const src=safeUrl(a.src,true);html=src?`<img src="${e(src)}" alt="${e(a.alt)}" loading="lazy" referrerpolicy="no-referrer">`:'';}
+  else if(n.type==='image') {const src=safeUrl(a.src,true);html=src?`<img src="${e(src)}" alt="${e(a.alt)}" loading="lazy" referrerpolicy="no-referrer"${imageStyle(a)}>`:'';}
   else if(n.type==='attachment') {
    const asset=ids.get(a.attachmentId);if(!asset)throw Error('attachment_not_in_manifest');
    const src='/space-assets/'+asset.hash, label=e(asset.filename);
-   html=raster.has(asset.contentType)?`<img src="${src}" alt="${label}" loading="lazy">`:`<a href="${src}" download="${label}">${label}</a>`;
+   html=raster.has(asset.contentType)?`<img src="${src}" alt="${label}" loading="lazy"${imageStyle(a)}>`:`<a href="${src}" download="${label}">${label}</a>`;
    if(asset.contentType==='application/pdf'&&options.pdfMode==='embed')html=`<iframe class="space-pdf" src="${src}" title="${label}" sandbox="" loading="lazy" referrerpolicy="no-referrer"></iframe>`+html;
   } else if(n.type==='externalLinkCard') {const href=safeUrl(a.href);html=href?wrap('a',e(a.title||href),` href="${e(href)}"${linkTarget(a)}`):e(a.title);}
   else if(n.type==='articleReference') {const target=options.resolveArticle?.(a);const href=safeUrl(target?.href);const label=e(a.labelMode==='custom'?a.customLabel:target?.title??a.fallbackTitle??a.title??'');html=href?wrap('a',label,` href="${e(href)}"`):label;}
