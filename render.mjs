@@ -7,7 +7,8 @@ const raster = new Set(['image/png','image/jpeg','image/gif','image/webp','image
 const imagePixels = /^(?:[1-9]\d{0,3}|10000)px$/;
 function imageStyle(attrs) {
  const dimensions=['width','height'].filter(key=>Number.isSafeInteger(attrs[key])&&attrs[key]>0&&attrs[key]<=10000).map(key=>`${key}:${attrs[key]}px`);
- return dimensions.length?` style="max-width:100%;${dimensions.join(';')}"`:'';
+ const placement=['left','center','right'].includes(attrs.alignment)?` class="space-image-align-${attrs.alignment}" data-align="${attrs.alignment}"`:'';
+ return placement+(dimensions.length?` style="max-width:100%;${dimensions.join(';')}"`:'');
 }
 function assetsIndex(assets = []) {
  const ids = new Map(), paths = new Map();
@@ -31,7 +32,7 @@ export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) 
   allowedTags: [...sanitizeHtml.defaults.allowedTags,'img','details','summary','nav',...(pdfMode==='embed'?['iframe']:[])],
   allowedAttributes: {
    '*':['id','class'], a:['href','title','data-level','download','target','rel'],
-   img:['src','alt','title','width','height','loading','referrerpolicy','style'], figure:['style'],
+   img:['src','alt','title','width','height','loading','referrerpolicy','style','data-align'], figure:['style','data-align'],
    nav:['data-table-of-contents','data-max-level','aria-label'], details:['open','data-space-toc'],
    li:['data-level','data-checked'], ol:['start'], td:['colspan','rowspan'], th:['colspan','rowspan','scope'],
    iframe:['src','title','sandbox','loading','referrerpolicy'],
@@ -43,6 +44,14 @@ export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) 
   },
   allowedSchemes:['https','http','mailto','tel'], allowedSchemesByTag:{img:['https'],iframe:[]}, allowProtocolRelative:false,
   transformTags: {
+   ...Object.fromEntries(['img','figure'].map(name=>[name,(tagName,attrs)=>{
+    const {'data-align':value,...rest}=attrs;
+    const alignment=['left','center','right'].includes(value)?value:null;
+    if(!alignment)return {tagName,attribs:rest};
+    const classes=(rest.class??'').split(/\s+/).filter(Boolean),className='space-image-align-'+alignment;
+    if(!classes.includes(className))classes.push(className);
+    return {tagName,attribs:{...rest,class:classes.join(' '),'data-align':alignment}};
+   }])),
    a: (tagName, attrs) => {const {target,rel,...rest}=attrs;return {tagName,attribs:{...rest,...(target==='_blank'&&/^https?:\/\//i.test(safeUrl(attrs.href))?{target:'_blank',rel:'noopener noreferrer'}:{})}};},
    iframe: (tagName, attrs) => ({tagName,attribs:{src:attrs.src??'',title:attrs.title??'PDF',sandbox:'',loading:'lazy',referrerpolicy:'no-referrer'}}),
   },
