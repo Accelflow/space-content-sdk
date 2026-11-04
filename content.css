@@ -9,3 +9,9 @@
   min-block-size: 1em;
   min-block-size: 1lh;
 }
+
+/* Explicit author placement is portable; unspecified placement is site policy. */
+.space-content :is(.space-image-align-left,.space-image-align-center,.space-image-align-right) { display:block; max-width:100%; }
+.space-content .space-image-align-left { margin-left:0; margin-right:auto; }
+.space-content .space-image-align-center { margin-left:auto; margin-right:auto; }
+.space-content .space-image-align-right { margin-left:auto; margin-right:0; }

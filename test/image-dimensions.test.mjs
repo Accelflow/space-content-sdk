@@ -16,3 +16,15 @@ test('HTML image styles preserve only bounded dimensions, not arbitrary CSS or e
  assert.doesNotMatch(html,/position|background|evil|onerror|<p style/);
  for(const value of ['0px','-1px','10001px','1.5px','calc(1px)','expression(alert(1))'])assert.doesNotMatch(sanitizeArticleHtml(`<img src="https://example.com/photo.png" style="width:${value};height:${value}">`),/style=/);
 });
+
+test('placement only accepts exact enum values and retains readable HTML metadata',()=>{
+ for(const alignment of ['left','center','right']){
+  const html=render({alignment,width:600,height:750});
+  assert.match(html,new RegExp('space-image-align-'+alignment));assert.match(html,new RegExp('data-align="'+alignment+'"'));
+ }
+ for(const alignment of ['LEFT','justify','right;position:fixed',null,{},1]){
+  assert.doesNotMatch(render({alignment}),/space-image-align|data-align/);
+ }
+ const html=sanitizeArticleHtml('<img src="https://example.com/photo.png" class="existing" data-align="right;position:fixed" style="width:600px">');
+ assert.match(html,/class="existing"/);assert.match(html,/width:600px/);assert.doesNotMatch(html,/data-align|position/);
+});

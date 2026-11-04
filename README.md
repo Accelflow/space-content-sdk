@@ -230,3 +230,12 @@ Run `npm run verify:local` for the standard local verification. This runs the
 SDK tests, including Build API transfer-to-render image regressions for JSON and
 HTML, then verifies the packed public exports and Vite/Next static builds, and
 audits dependencies. The same image regressions run against the packed SDK.
+
+
+Image nodes and raster attachments may carry `attrs.alignment` as `left`,
+`center`, or `right`. Rendering preserves the explicit placement with
+`space-image-align-left`, `space-image-align-center`, or
+`space-image-align-right`. HTML images/figures with the same bounded `data-align`
+attribute are normalized to these classes. Import the opt-in `content.css` or
+provide equivalent site CSS. Unspecified placement and responsive image sizing
+remain site policy; width/height values are preserved independently.
