@@ -1,0 +1,13 @@
+schema_version: 2
+definition:
+  id: REL-SDK-ATTACHMENT-IMAGE-ALT
+  contract_id: C-SDK-ATTACHMENT-IMAGE-ALT
+  property_id: P-SDK-ATTACHMENT-IMAGE-ALT
+  relation: requires
+  applicability:
+    condition: SDKがHeadlessのJSONから添付画像をレンダリングする場合
+  implementations: [render.mjs]
+  obligations:
+    - id: O-SDK-ATTACHMENT-IMAGE-ALT
+      method: integration
+      commands: [sdk-attachment-image-alt]

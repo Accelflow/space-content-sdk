@@ -1,0 +1,11 @@
+schema_version: 2
+definition:
+  id: C-SDK-ATTACHMENT-IMAGE-ALT
+  version: '1'
+  description: Headless SDKのJSONレンダラーが添付画像ごとの代替テキストを公開HTMLに反映する
+  scope: '@accelflow/space-content/render'
+  assumptions: [同じ添付ファイルを複数の画像ブロックで再利用できる]
+  preconditions: [添付ファイルが公開アセットの一覧に含まれる]
+  responsibility: 代替テキストをエスケープして出力し、空文字と未設定を区別する
+  approval_status: approved
+  requirement_ids: [R-ATTACHMENT-IMAGE-ALT]
