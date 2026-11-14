@@ -37,6 +37,7 @@
     "node.mjs",
     "node.d.mts",
     "README.md",
+    "skill/space-headless-publishing/SKILL.md",
     "toc.mjs",
     "toc.d.mts",
     "toc.css",

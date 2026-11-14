@@ -8,7 +8,7 @@ const run=(cmd,args,cwd=temp)=>execFileSync(cmd,args,{cwd,stdio:'inherit',env:{.
 try {
  run('npm',['test'],root);
  const packed=JSON.parse(execFileSync('npm',['pack','--ignore-scripts','--json','--pack-destination',temp],{cwd:root,encoding:'utf8'}))[0];
- const allowed=['LICENSE','README.md','package.json','node.mjs','node.d.mts','toc.mjs','toc.d.mts','toc.css','render.mjs','render.d.mts','profile.mjs','profile.d.mts','profile.css','content.css'].sort();
+ const allowed=['LICENSE','README.md','package.json','skill/space-headless-publishing/SKILL.md','node.mjs','node.d.mts','toc.mjs','toc.d.mts','toc.css','render.mjs','render.d.mts','profile.mjs','profile.d.mts','profile.css','content.css'].sort();
  if(JSON.stringify(packed.files.map(f=>f.path).sort())!==JSON.stringify(allowed))throw Error('Unexpected package contents');
  writeFileSync(join(temp,'package.json'),JSON.stringify({name:'sdk-consumer-verification',private:true,type:'module'}));
  run('npm',['install','--ignore-scripts','--no-audit','--no-fund',join(temp,packed.filename)]);

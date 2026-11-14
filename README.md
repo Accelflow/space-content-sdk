@@ -74,6 +74,10 @@ repository; the tests here exercise the client with synthetic protocol fixtures.
 See [Vite and Next.js examples](https://github.com/Accelflow/space-content-sdk/tree/main/examples#readme) for complete static builds,
 CI cache handling, HTML rendering, asset headers and deployment boundaries.
 
+## AI setup skill
+
+Use the [Space Headless publishing skill](skill/space-headless-publishing/SKILL.md) to guide an AI agent through workspace setup, build token handling and GitHub Actions dispatch.
+
 ## Table of contents
 
 The browser-safe entry is separate from the authenticated Node client:
