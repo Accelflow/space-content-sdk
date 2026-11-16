@@ -30,4 +30,7 @@ jobs:
       - run: npm ci --ignore-scripts --include=dev
       - run: npm test
       - run: npm run verify:package
-      - run: npm publish --access public
+      - name: Publish npm package
+        env:
+          DIST_TAG: ${{ contains(inputs.tag, '-') && 'beta' || 'latest' }}
+        run: npm publish --access public --tag "$DIST_TAG"
