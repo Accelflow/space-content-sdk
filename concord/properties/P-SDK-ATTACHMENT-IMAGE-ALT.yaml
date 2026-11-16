@@ -1,0 +1,9 @@
+schema_version: 2
+definition:
+  id: P-SDK-ATTACHMENT-IMAGE-ALT
+  version: '1'
+  description: 同じ添付IDを持つ画像がブロックごとのimg altで表示され、寸法と配置が保たれる
+  approval_status: approved
+  implementations: []
+  depends_on: []
+  obligations: []

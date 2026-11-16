@@ -91,7 +91,8 @@ export function renderArticleBody(body, options = {}) {
   else if(n.type==='attachment') {
    const asset=ids.get(a.attachmentId);if(!asset)throw Error('attachment_not_in_manifest');
    const src='/space-assets/'+asset.hash, label=e(asset.filename);
-   html=raster.has(asset.contentType)?`<img src="${src}" alt="${label}" loading="lazy"${imageStyle(a)}>`:`<a href="${src}" download="${label}">${label}</a>`;
+   const alt=e(typeof a.alt==='string'?a.alt:asset.filename);
+   html=raster.has(asset.contentType)?`<img src="${src}" alt="${alt}" loading="lazy"${imageStyle(a)}>`:`<a href="${src}" download="${label}">${label}</a>`;
    if(asset.contentType==='application/pdf'&&options.pdfMode==='embed')html=`<iframe class="space-pdf" src="${src}" title="${label}" sandbox="" loading="lazy" referrerpolicy="no-referrer"></iframe>`+html;
   } else if(n.type==='externalLinkCard') {const href=safeUrl(a.href);html=href?wrap('a',e(a.title||href),` href="${e(href)}"${linkTarget(a)}`):e(a.title);}
   else if(n.type==='articleReference') {const target=options.resolveArticle?.(a);const href=safeUrl(target?.href);const label=e(a.labelMode==='custom'?a.customLabel:target?.title??a.fallbackTitle??a.title??'');html=href?wrap('a',label,` href="${e(href)}"`):label;}

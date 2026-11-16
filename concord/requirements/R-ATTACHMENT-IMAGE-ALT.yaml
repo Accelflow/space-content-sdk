@@ -1,0 +1,4 @@
+schema_version: 2
+definition:
+  id: R-ATTACHMENT-IMAGE-ALT
+  description: ASOR-BACKLOG-157。記事内の添付画像ごとに代替テキストを保持し、元記事の画像説明を移行して公開HTMLに反映する

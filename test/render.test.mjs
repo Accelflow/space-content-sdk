@@ -55,3 +55,19 @@ test('generated headings cannot steal later explicit IDs, including duplicate su
  assert.match(html,/<h2 id="intro-3">Intro/);assert.match(html,/<h2 id="intro">Renamed/);assert.match(html,/<h2 id="intro-2">Other/);assert.match(html,/<h2 id="intro-4">Intro/);
  assert.throws(()=>render(doc(h('Hi')),{headingId:()=>'<unsafe>'}),/invalid_heading_id/);
 });
+
+test('renders alt per attachment block while preserving dimensions and legacy fallback', () => {
+ const image = { id: 'photo', hash: 'b'.repeat(64), filename: 'photo.png', contentType: 'image/png' };
+ const attachment = attrs => ({
+  type: 'attachment',
+  attrs: { attachmentId: image.id, width: 320, height: 190, alignment: 'right', ...attrs },
+ });
+ const html = render(doc(attachment({ alt: '地図 "A" & B<' }), attachment({ alt: '' }), attachment({}), attachment({ alt: null })), {
+  assets: [image],
+ });
+ assert.deepEqual([...html.matchAll(/<img\b[^>]*\balt="([^"]*)"/g)].map(match => match[1]),
+  ['地図 &quot;A&quot; &amp; B&lt;', '', 'photo.png', 'photo.png']);
+ assert.equal((html.match(/width:320px/g) || []).length, 4);
+ assert.equal((html.match(/height:190px/g) || []).length, 4);
+ assert.equal((html.match(/data-align="right"/g) || []).length, 4);
+});

@@ -1,0 +1,11 @@
+schema_version = 1
+
+[runner]
+kind = "commands"
+
+[[commands]]
+id = "sdk-attachment-image-alt"
+program = "node"
+args = ["--test", "test/render.test.mjs"]
+files = ["render.mjs", "render.d.mts", "test/render.test.mjs", "package.json", "package-lock.json"]
+timeout_seconds = 60
