@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Reviewed Git tag matching package version (v0.1.0-beta.1)
+        description: Reviewed Git tag matching the package version
         required: true
         type: string
 permissions:
@@ -22,6 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          registry-url: https://registry.npmjs.org
       - name: Check release tag
         env:
           RELEASE_TAG: ${{ inputs.tag }}
