@@ -63,17 +63,18 @@ export function renderArticleBody(body, options = {}) {
  if (typeof body==='string') return sanitizeArticleHtml(body,options);
  if (!body || body.type!=='doc' || !Array.isArray(body.content)) throw Error('invalid_document');
  const {ids}=assetsIndex(options.assets), headings=[], anchors=new Map(), used=new Set(), reserved=new Set();let count=0;
- const validId=id=>typeof id==='string' && /^[\p{L}\p{N}_-]+$/u.test(id);
+ const validExplicitId=id=>typeof id==='string' && id.length>0 && !/[\u0000-\u0020\u007f\ud800-\udfff]/u.test(id);
+ const validGeneratedId=id=>typeof id==='string' && /^[\p{L}\p{N}_-]+$/u.test(id);
  const text=n=>n.type==='text'?String(n.text??''):(n.content??[]).map(text).join('');
  function inspect(n,depth=0) {
   if (!n || typeof n!=='object' || typeof n.type!=='string' || ++count>100000 || depth>64 || (n.content!==undefined&&!Array.isArray(n.content))) throw Error('invalid_document');
-  if(n.type==='heading' && validId(n.attrs?.id))reserved.add(n.attrs.id);
+  if(n.type==='heading' && validExplicitId(n.attrs?.id))reserved.add(n.attrs.id);
   for(const child of n.content??[])inspect(child,depth+1);
  }
  inspect(body);
  function collect(n) {
   if(n.type==='tableOfContents')return;
-  if(n.type==='heading') {const level=Number.isInteger(n.attrs?.level)&&n.attrs.level>=1&&n.attrs.level<=6?n.attrs.level:2;const title=text(n);const explicit=validId(n.attrs?.id);let id=explicit?n.attrs.id:options.headingId?options.headingId(title):title.toLowerCase().replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-|-$/g,'')||'heading';if(!validId(id))throw Error('invalid_heading_id');const base=id;let index=2;while(used.has(id)||(!explicit&&reserved.has(id))||(id!==base&&reserved.has(id)))id=base+'-'+index++;used.add(id);anchors.set(n,id);headings.push({id,level,text:title});}
+  if(n.type==='heading') {const level=Number.isInteger(n.attrs?.level)&&n.attrs.level>=1&&n.attrs.level<=6?n.attrs.level:2;const title=text(n);const explicit=validExplicitId(n.attrs?.id);let id=explicit?n.attrs.id:options.headingId?options.headingId(title):title.toLowerCase().replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-|-$/g,'')||'heading';if(!explicit&&!validGeneratedId(id))throw Error('invalid_heading_id');const base=id;let index=2;while(used.has(id)||(!explicit&&reserved.has(id))||(id!==base&&reserved.has(id)))id=base+'-'+index++;used.add(id);anchors.set(n,id);headings.push({id,level,text:title});}
   for(const child of n.content??[])collect(child);
  }
  collect(body);

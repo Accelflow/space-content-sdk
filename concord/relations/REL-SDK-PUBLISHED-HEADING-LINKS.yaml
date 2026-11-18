@@ -1,0 +1,13 @@
+schema_version: 2
+definition:
+  id: REL-SDK-PUBLISHED-HEADING-LINKS
+  contract_id: C-SDK-PUBLISHED-HEADING-LINKS
+  property_id: P-SDK-PUBLISHED-HEADING-LINKS
+  relation: requires
+  applicability:
+    condition: SDKがHeadlessのJSONから見出しをレンダリングする場合
+  implementations: [render.mjs]
+  obligations:
+    - id: O-SDK-PUBLISHED-HEADING-LINKS
+      method: integration
+      commands: [sdk-published-heading-links]

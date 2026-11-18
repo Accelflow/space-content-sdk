@@ -9,3 +9,10 @@ program = "node"
 args = ["--test", "test/render.test.mjs"]
 files = ["render.mjs", "render.d.mts", "test/render.test.mjs", "package.json", "package-lock.json"]
 timeout_seconds = 60
+
+[[commands]]
+id = "sdk-published-heading-links"
+program = "node"
+args = ["--test", "--test-name-pattern=exact punctuation", "test/render.test.mjs"]
+files = ["render.mjs", "test/render.test.mjs"]
+timeout_seconds = 60

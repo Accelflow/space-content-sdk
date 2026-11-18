@@ -179,8 +179,10 @@ retains existing API link behavior. Update the build after changing the URL.
 ### Heading IDs and table-of-contents links
 
 TOC links percent-encode the heading ID once (for example, `#%E3%81%BE%E3%81%A8%E3%82%81`).
-Valid explicit heading IDs are preserved. To retain an existing site's generation
-rules for headings without IDs, pass `headingId` to `renderArticleBody`:
+Explicit heading IDs, including legacy punctuation, are preserved in the HTML and
+linked with percent-encoded fragments. Explicit IDs must be nonempty and contain
+no ASCII whitespace or control characters. To customize generation
+for headings without IDs, pass `headingId` to `renderArticleBody`:
 
 ```js
 renderArticleBody(body, {

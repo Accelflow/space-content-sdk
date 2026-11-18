@@ -1,0 +1,9 @@
+schema_version: 2
+definition:
+  id: P-SDK-PUBLISHED-HEADING-LINKS
+  version: '1'
+  description: Headless SDKのJSONレンダラーは記号を含む公開済み見出しIDと対応する目次リンクを維持する
+  approval_status: approved
+  implementations: []
+  depends_on: []
+  obligations: []

@@ -71,3 +71,14 @@ test('renders alt per attachment block while preserving dimensions and legacy fa
  assert.equal((html.match(/height:190px/g) || []).length, 4);
  assert.equal((html.match(/data-align="right"/g) || []).length, 4);
 });
+
+test('preserves the exact punctuation in an explicit published heading ID and its TOC link', () => {
+ const legacy = '確認：信頼性・費用（A/B）〜「見積り」？';
+ const html = render(doc({type:'tableOfContents'}, {
+  ...h('見出しを編集した？'),
+  attrs: {level:2,id:legacy},
+ }, h('新規：信頼性・費用？')));
+ assert(html.includes(`<h2 id="${legacy}">見出しを編集した？</h2>`));
+ assert(html.includes(`href="#${encodeURIComponent(legacy)}"`));
+ assert(html.includes('<h2 id="新規-信頼性-費用">新規：信頼性・費用？</h2>'));
+});

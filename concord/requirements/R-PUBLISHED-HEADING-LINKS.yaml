@@ -1,0 +1,4 @@
+schema_version: 2
+definition:
+  id: R-PUBLISHED-HEADING-LINKS
+  description: Headless SDKのJSONレンダラーは記号を含む公開済み見出しIDと対応する目次リンクを維持する
