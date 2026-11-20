@@ -6,7 +6,7 @@ export interface BuildManifest {
 }
 export interface SyncOptions {
  apiUrl: string; downloadOrigin: string; accountId: string; workspaceId: string; token: string;
- cacheDir: string; outputDir: string; fetch?: typeof globalThis.fetch; maxRetries?: number;
+ cacheDir: string; outputDir: string; configPath?: string; fetch?: typeof globalThis.fetch; maxRetries?: number;
 }
 export function syncContent(options: SyncOptions): Promise<{
  snapshotDir:string; manifest:BuildManifest;

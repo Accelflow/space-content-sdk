@@ -36,6 +36,31 @@ that mapping. Internal article links retain published paths; the site's route
 mapping must match or transform them. Place static assets at the domain root,
 or rewrite those URLs for a subpath deployment.
 
+### Custom image output
+
+Put `space-content.toml` in the working directory where you call
+`syncContent()`, or pass `configPath`. For example:
+
+```toml
+[images]
+output_dir = "public/images/space"
+url_prefix = "/images/space/"
+```
+
+Set both fields together. `output_dir` is relative to the directory containing
+the TOML file. `url_prefix` is a site-root-relative path. Map the directory to
+that path in your static host. The SDK writes supported raster images there
+with their SHA-256 filenames and updates `coverImageUrl` and `ogpImageUrl`
+in the generated `content.json`. Pass its `assets` to `renderArticleBody()`
+to apply the same URLs to JSON and HTML article bodies. If your host generates
+asset headers, use each asset's `publicUrl` when present and its manifest MIME
+type. Non-image attachments retain their existing URLs.
+
+Without an `[images]` table, synchronization and rendering retain
+`/space-assets/<sha256>`. The snapshot directory still contains the original
+assets for consumers that copy it. Use a build-owned public output directory
+and keep credentials in the server-side environment.
+
 Vite integration: run sync as the first build script, import the generated JSON,
 and render it using the site's SSG/prerender tool. Vite alone does not create
 article HTML pages. Next.js integration: import generated JSON in server build

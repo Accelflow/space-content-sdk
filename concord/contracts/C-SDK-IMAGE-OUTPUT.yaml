@@ -1,0 +1,11 @@
+schema_version: 2
+definition:
+  id: C-SDK-IMAGE-OUTPUT
+  version: '1'
+  description: 設定済みの保存先に検証済みの画像を配置し、記事本文、一覧カバー、SNS共有画像の参照を対応させる
+  scope: '@accelflow/space-content/node と @accelflow/space-content/render'
+  assumptions: [静的サイトが指定の公開URLから画像を配信する]
+  preconditions: [Headless APIの公開スナップショットに画像が含まれる]
+  responsibility: 画像の保存先と参照を一貫させ、設定がないときは従来の出力を維持する
+  approval_status: approved
+  requirement_ids: [R-SDK-IMAGE-OUTPUT]

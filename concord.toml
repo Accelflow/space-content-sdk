@@ -9,3 +9,10 @@ program = "node"
 args = ["--test", "test/render.test.mjs"]
 files = ["render.mjs", "render.d.mts", "test/render.test.mjs", "package.json", "package-lock.json"]
 timeout_seconds = 60
+
+[[commands]]
+id = "sdk-image-output"
+program = "node"
+args = ["--test", "test/image-output.test.mjs"]
+files = ["node.mjs", "node.d.mts", "image-output.mjs", "render.mjs", "render.d.mts", "test/image-output.test.mjs", "package.json", "package-lock.json", "scripts/verify-package.mjs"]
+timeout_seconds = 60

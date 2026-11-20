@@ -11,12 +11,20 @@ function imageStyle(attrs) {
  return placement+(dimensions.length?` style="max-width:100%;${dimensions.join(';')}"`:'');
 }
 function assetsIndex(assets = []) {
- const ids = new Map(), paths = new Map();
+ const ids = new Map(), paths = new Map(), imageUrls = new Map();
  for (const a of assets) {
   if (!a || typeof a.id !== 'string' || !hash.test(a.hash) || typeof a.contentType !== 'string' || typeof a.filename !== 'string' || ids.has(a.id)) throw Error('invalid_render_asset');
-  ids.set(a.id,a); paths.set('/space-assets/'+a.hash,a);
+  const source = '/space-assets/' + a.hash;
+  if (a.publicUrl !== undefined) {
+   if (!raster.has(a.contentType) || typeof a.publicUrl !== 'string'
+       || !/^\/(?:[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\/)+[a-f0-9]{64}$/.test(a.publicUrl)
+       || !a.publicUrl.endsWith('/' + a.hash)) throw Error('invalid_render_asset_url');
+   imageUrls.set(source, a.publicUrl);
+  }
+  ids.set(a.id,a);
+  paths.set(source,a);
  }
- return {ids,paths};
+ return {ids,paths,imageUrls};
 }
 function safeUrl(value, image = false) {
  if (typeof value !== 'string' || /[\u0000-\u0020\u007f\\]/.test(value)) return '';
@@ -26,7 +34,7 @@ function safeUrl(value, image = false) {
 /** Build-time HTML sanitizer. Only known local PDF assets may be embedded, opt-in. */
 export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) {
  if (typeof html !== 'string') throw Error('invalid_html_body');
- const {paths}=assetsIndex(assets);
+ const {paths,imageUrls}=assetsIndex(assets);
  return sanitizeHtml(html, {
   nonBooleanAttributes: sanitizeHtml.defaults.nonBooleanAttributes.filter(a=>a!=='sandbox'),
   allowedTags: [...sanitizeHtml.defaults.allowedTags,'img','details','summary','nav',...(pdfMode==='embed'?['iframe']:[])],
@@ -46,13 +54,14 @@ export function sanitizeArticleHtml(html, {assets = [], pdfMode = 'link'} = {}) 
   transformTags: {
    ...Object.fromEntries(['img','figure'].map(name=>[name,(tagName,attrs)=>{
     const {'data-align':value,...rest}=attrs;
+    if (tagName === 'img' && imageUrls.has(rest.src)) rest.src = imageUrls.get(rest.src);
     const alignment=['left','center','right'].includes(value)?value:null;
     if(!alignment)return {tagName,attribs:rest};
     const classes=(rest.class??'').split(/\s+/).filter(Boolean),className='space-image-align-'+alignment;
     if(!classes.includes(className))classes.push(className);
     return {tagName,attribs:{...rest,class:classes.join(' '),'data-align':alignment}};
    }])),
-   a: (tagName, attrs) => {const {target,rel,...rest}=attrs;return {tagName,attribs:{...rest,...(target==='_blank'&&/^https?:\/\//i.test(safeUrl(attrs.href))?{target:'_blank',rel:'noopener noreferrer'}:{})}};},
+   a: (tagName, attrs) => {const {target,rel,...rest}=attrs;if(imageUrls.has(rest.href))rest.href=imageUrls.get(rest.href);return {tagName,attribs:{...rest,...(target==='_blank'&&/^https?:\/\//i.test(safeUrl(attrs.href))?{target:'_blank',rel:'noopener noreferrer'}:{})}};},
    iframe: (tagName, attrs) => ({tagName,attribs:{src:attrs.src??'',title:attrs.title??'PDF',sandbox:'',loading:'lazy',referrerpolicy:'no-referrer'}}),
   },
   exclusiveFilter: frame => frame.tag==='iframe' && !(pdfMode==='embed' && paths.get(frame.attribs.src)?.contentType==='application/pdf'),

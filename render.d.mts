@@ -1,5 +1,5 @@
 export interface ContentNode { type: string; text?: string; attrs?: Record<string, unknown>; marks?: Array<{type:string;attrs?:Record<string,unknown>}>; content?: ContentNode[]; }
-export interface ContentAsset {id:string;hash:string;contentType:string;filename:string;}
+export interface ContentAsset {id:string;hash:string;contentType:string;filename:string;publicUrl?:string;}
 export interface RenderOptions {
  /** Used only when a heading has no valid explicit ID. Return an unencoded ID. */
  headingId?: (text:string)=>string;

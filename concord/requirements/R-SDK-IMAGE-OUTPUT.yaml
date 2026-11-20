@@ -1,0 +1,4 @@
+schema_version: 2
+definition:
+  id: R-SDK-IMAGE-OUTPUT
+  description: Space Headless SDKの画像保存先と公開URLの接頭辞をspace-content.tomlから指定できる

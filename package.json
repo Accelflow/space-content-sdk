@@ -35,6 +35,7 @@
   },
   "files": [
     "node.mjs",
+    "image-output.mjs",
     "node.d.mts",
     "README.md",
     "toc.mjs",
@@ -63,7 +64,8 @@
     "tag": "beta"
   },
   "dependencies": {
-    "sanitize-html": "2.18.1"
+    "sanitize-html": "2.18.1",
+    "smol-toml": "1.9.1"
   },
   "author": {
     "name": "Accelflow Inc.",
