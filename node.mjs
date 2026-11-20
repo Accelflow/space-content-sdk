@@ -1,7 +1,8 @@
 import {createReadStream} from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename, rm, lstat, open, copyFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, sep } from 'node:path';
+import {publishImages, readImageOutput} from './image-output.mjs';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const hashPattern = /^[a-f0-9]{64}$/;
 function validateManifest(m, accountId, workspaceId) {
@@ -79,7 +80,14 @@ async function cacheRead(path,o) {return await cacheValid(path,o)?readFile(path)
 async function safeDirectory(path) { await mkdir(path, { recursive: true, mode: 0o700 }); const s = await lstat(path); if (s.isSymbolicLink() || !s.isDirectory())
     throw Error('unsafe_cache_directory'); }
 /** Build-time only. cacheDir must be a private, trusted directory; never expose it to untrusted PRs. */
-export async function syncContent({ apiUrl, downloadOrigin, accountId, workspaceId, token, cacheDir, outputDir, fetch: fetcher = globalThis.fetch, maxRetries = 2 }) {
+export async function syncContent({ apiUrl, downloadOrigin, accountId, workspaceId, token, cacheDir, outputDir, configPath, fetch: fetcher = globalThis.fetch, maxRetries = 2 }) {
+    const imageOutput = await readImageOutput(configPath);
+    const cache = resolve(cacheDir), output = resolve(outputDir);
+    const directories = [cache, output];
+    if (imageOutput) directories.push(join(imageOutput.root, ...imageOutput.segments));
+    for (const [i, parent] of directories.entries())
+        if (directories.some((child, j) => i !== j && (child === parent || child.startsWith(parent + sep))))
+            throw Error('overlapping_directories');
     const api = new URL(apiUrl), allowed = new URL(downloadOrigin);
     if (api.protocol !== 'https:' || allowed.protocol !== 'https:' || api.username || api.password || allowed.username || allowed.password)
         throw Error('https_required');
@@ -95,9 +103,6 @@ export async function syncContent({ apiUrl, downloadOrigin, accountId, workspace
     const objects = validateManifest(manifest, accountId, workspaceId), url = new URL(downloadUrl);
     if (url.origin !== allowed.origin || url.protocol !== 'https:' || url.username || url.password)
         throw Error('untrusted_download_url');
-    const cache = resolve(cacheDir), output = resolve(outputDir);
-    if (output === cache || output.startsWith(cache + '/') || cache.startsWith(output + '/'))
-        throw Error('overlapping_directories');
     await safeDirectory(cache);
     const namespace = join(cache, sha(JSON.stringify([accountId, workspaceId, manifest.format, manifest.version])));
     await safeDirectory(namespace);
@@ -190,7 +195,10 @@ export async function syncContent({ apiUrl, downloadOrigin, accountId, workspace
                 throw Error('cache_corrupt');
             await copyFile(join(namespace,a.hash),join(generation,'space-assets',a.hash));
         }
-        await writeFile(join(generation, 'content.json'), JSON.stringify({ snapshotId: manifest.snapshotId, format: manifest.format, articles, assets: manifest.assets }));
+        const assets = imageOutput
+            ? await publishImages(imageOutput, generation, articles, manifest.assets)
+            : manifest.assets;
+        await writeFile(join(generation, 'content.json'), JSON.stringify({ snapshotId: manifest.snapshotId, format: manifest.format, articles, assets }));
         return { snapshotDir: generation, manifest, diagnostics: { downloadedObjects: downloads, cacheHits: objects.size - missing.length } };
     }
     catch (e) {

@@ -1,0 +1,13 @@
+schema_version: 2
+definition:
+  id: REL-SDK-IMAGE-OUTPUT
+  contract_id: C-SDK-IMAGE-OUTPUT
+  property_id: P-SDK-IMAGE-OUTPUT
+  relation: requires
+  applicability:
+    condition: SDKがHeadlessスナップショットをビルド用に準備する場合
+  implementations: [node.mjs, image-output.mjs, render.mjs]
+  obligations:
+    - id: O-SDK-IMAGE-OUTPUT
+      method: integration
+      commands: [sdk-image-output]

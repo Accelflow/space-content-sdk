@@ -1,0 +1,9 @@
+schema_version: 2
+definition:
+  id: P-SDK-IMAGE-OUTPUT
+  version: '1'
+  description: HTMLとJSONで画像の参照先が一致し、未設定時には従来の参照を保ち、不正なパスへの出力を拒否する
+  approval_status: approved
+  implementations: []
+  depends_on: []
+  obligations: []
